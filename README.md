@@ -2,6 +2,27 @@
 
 A client-side JavaScript library for building valid EPUB 3 files directly in the browser. No server required.
 
+[![GitHub](https://img.shields.io/badge/github-BR1JM0H4N%2FepubJS-blue?logo=github)](https://github.com/BR1JM0H4N/epubJS)
+[![License](https://img.shields.io/github/license/BR1JM0H4N/epubJS)](LICENSE)
+[![JavaScript](https://img.shields.io/badge/javascript-55.3%25-yellow?logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![HTML](https://img.shields.io/badge/html-44.7%25-orange?logo=html5)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![npm version](https://img.shields.io/npm/v/epubjs)](https://www.npmjs.com/package/epubjs)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/BR1JM0H4N/epubJS/.github/workflows/ci.yml?branch=main)](https://github.com/BR1JM0H4N/epubJS/actions)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/BR1JM0H4N/epubJS/graphs/commit-activity)
+
+## 🚀 Live Demo
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen?style=for-the-badge)](https://br1jm0h4n.github.io/epubJS/)
+
+## Features
+
+- 📚 Build valid EPUB 3 files directly in the browser
+- 🚫 No server required
+- ⚡ Fast and lightweight
+- 🎨 Full client-side control
+- 📖 Support for standard EPUB 3 specification
+
+
 ---
 
 ## Table of Contents
