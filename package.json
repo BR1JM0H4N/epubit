@@ -1,6 +1,6 @@
 {
   "name": "@br1jm0h4n/epubjs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Client-side EPUB 3 builder — create valid EPUB files directly in the browser",
   "main": "epubJS.js",
   "browser": "epubJS.min.js",
