@@ -3,6 +3,9 @@ name: Minify & Commit
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   minify:
     runs-on: ubuntu-latest
@@ -17,26 +20,16 @@ jobs:
           node-version: 20
 
       - name: Minify with Terser
-        run: |
-          npx terser epubJS.js \
-            --compress \
-              drop_console=true,\
-              passes=2 \
-            --mangle \
-            --mangle-props \
-              regex='^_[a-z]' \
-            --format \
-              preamble='/*! epubJS.js | @br1jm0h4n/epubjs | MIT */' \
-            --output epubJS.min.js
+        run: npx terser epubJS.js --compress "drop_console=true,passes=2" --mangle --format "preamble='/*! epub.js | @br1jm0h4n/epubjs | MIT */'" --output epubJS.min.js
 
       - name: Show size diff
         run: |
           ORIG=$(wc -c < epubJS.js)
           MINI=$(wc -c < epubJS.min.js)
           PCT=$(awk "BEGIN { printf \"%.1f\", (1 - $MINI/$ORIG) * 100 }")
-          echo "epub.js     : $ORIG bytes"
+          echo "epubJS.js    : $ORIG bytes"
           echo "epubJS.min.js: $MINI bytes"
-          echo "Reduction   : $PCT%"
+          echo "Reduction    : $PCT%"
 
       - name: Commit minified file
         run: |
