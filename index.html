@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>epub.js — Client-side EPUB 3 builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@br1jm0h4n/epubjs/epubJS.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0d0d;
+      --bg2:      #141414;
+      --bg3:      #1a1a1a;
+      --border:   #2a2a2a;
+      --border2:  #333;
+      --text:     #e8e6e0;
+      --muted:    #6b6960;
+      --accent:   #c8f060;
+      --accent2:  #a8d440;
+      --red:      #ff5f5f;
+      --mono:     'DM Mono', monospace;
+      --serif:    'DM Serif Display', serif;
+      --sans:     'Instrument Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.028;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+
+    .logo span { color: var(--muted); }
+
+    nav { display: flex; gap: 32px; align-items: center; }
+
+    nav a {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+      font-family: var(--mono);
+    }
+    nav a:hover { color: var(--text); }
+
+    .nav-badge {
+      background: var(--accent);
+      color: #0d0d0d;
+      font-size: 10px;
+      font-weight: 600;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      border-radius: 99px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 100px 48px 80px;
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(48px, 7vw, 88px);
+      line-height: 1.0;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 28px;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 44px;
+    }
+
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0d0d;
+    }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+    .btn-ghost:hover { border-color: var(--muted); background: var(--bg3); }
+
+    /* ── INSTALL STRIP ── */
+    .install-strip {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 48px;
+      display: flex;
+      gap: 32px;
+      overflow-x: auto;
+    }
+
+    .install-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .install-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      min-width: 36px;
+    }
+
+    .install-cmd {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      position: relative;
+    }
+    .install-cmd:hover { border-color: var(--border2); }
+
+    .install-cmd .copy-hint {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--muted);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .install-cmd:hover .copy-hint { opacity: 1; }
+
+    /* ── SECTION ── */
+    section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 72px 48px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-family: var(--serif);
+      font-size: 36px;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 480px;
+      margin-bottom: 40px;
+    }
+
+    /* ── API GRID ── */
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .api-card {
+      background: var(--bg2);
+      padding: 24px;
+      transition: background 0.2s;
+    }
+    .api-card:hover { background: var(--bg3); }
+
+    .api-method {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .api-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── DEMO BUILDER ── */
+    .demo-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      .demo-layout { grid-template-columns: 1fr; }
+    }
+
+    .demo-panel {
+      background: var(--bg2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .demo-panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .demo-panel-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green  { background: #28c840; }
+    .dot-row { display: flex; gap: 5px; }
+
+    .demo-fields {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input[type="text"], textarea {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 9px 12px;
+      border-radius: 5px;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
+
+    textarea { min-height: 110px; }
+
+    .chapter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chapter-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .chapter-row input { flex: 0 0 160px; }
+    .chapter-row textarea { flex: 1; min-height: 60px; }
+
+    .btn-remove {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: all 0.2s;
+    }
+    .btn-remove:hover { border-color: var(--red); color: var(--red); }
+
+    .btn-add {
+      background: transparent;
+      border: 1px dashed var(--border2);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+    .demo-actions {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .btn-generate {
+      background: var(--accent);
+      color: #0d0d0d;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-generate:hover { background: var(--accent2); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* code panel */
+    .code-panel {
+      background: var(--bg);
+      padding: 24px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.8;
+      overflow: auto;
+      flex: 1;
+      min-height: 500px;
+      white-space: pre;
+    }
+
+    .code-panel .kw  { color: #d4a0ff; }
+    .code-panel .fn  { color: #7dd8ff; }
+    .code-panel .str { color: #a8d440; }
+    .code-panel .cm  { color: #4a4a4a; }
+    .code-panel .num { color: #ffb86c; }
+
+    /* ── STATUS LOG ── */
+    #status-log {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      min-height: 44px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    #status-log.ok    { color: var(--accent); }
+    #status-log.err   { color: var(--red); }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .status-dot.idle { animation: none; background: var(--border2); }
+
+    /* ── FEATURES ── */
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-item {
+      padding: 22px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feature-item:hover { border-color: var(--border2); transform: translateY(-2px); }
+
+    .feature-icon {
+      font-size: 20px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .feature-item h3 {
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .feature-item p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* ── FOOTER ── */
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    footer p {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── ANIMATIONS ── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeIn 0.6s ease forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; transform: none; } }
+
+    .fade-in:nth-child(1) { animation-delay: 0.05s; }
+    .fade-in:nth-child(2) { animation-delay: 0.12s; }
+    .fade-in:nth-child(3) { animation-delay: 0.19s; }
+    .fade-in:nth-child(4) { animation-delay: 0.26s; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    @media (max-width: 640px) {
+      header { padding: 0 20px; }
+      .hero, section { padding-left: 20px; padding-right: 20px; }
+      .install-strip { padding: 16px 20px; }
+      footer { padding: 32px 20px; }
+      h1 { font-size: 42px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="#">epub<span>.js</span></a>
+  <nav>
+    <a href="#demo">Demo</a>
+    <a href="#api">API</a>
+    <a href="https://github.com/br1jm0h4n/epubjs" target="_blank">GitHub</a>
+    <a href="https://www.npmjs.com/package/@br1jm0h4n/epubjs" target="_blank" class="nav-badge">npm</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow fade-in">client-side epub 3 builder</div>
+  <h1 class="fade-in">Build <em>EPUBs</em><br/>in the browser.</h1>
+  <p class="hero-sub fade-in">No server. No backend. Pure JavaScript. Turn HTML into valid EPUB 3 files with a clean, chainable API — sanitizer, cover, TOC, images and fonts included.</p>
+  <div class="hero-actions fade-in">
+    <a href="#demo" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="2,1 12,7 2,13" fill="currentColor"/></svg>
+      Try it live
+    </a>
+    <a href="https://github.com/br1jm0h4n/epubjs" target="_blank" class="btn btn-ghost">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      View source
+    </a>
+  </div>
+</div>
+
+<!-- INSTALL STRIP -->
+<div class="install-strip">
+  <div class="install-item">
+    <span class="install-label">npm</span>
+    <span class="install-cmd" onclick="copyText(this, 'npm install @br1jm0h4n/epubjs')">
+      npm install @br1jm0h4n/epubjs
+      <span class="copy-hint">copy</span>
+    </span>
+  </div>
+  <div class="install-item">
+    <span class="install-label">cdn</span>
+    <span class="install-cmd" onclick="copyText(this, 'https://cdn.jsdelivr.net/npm/@br1jm0h4n/epubjs/epubJS.min.js')">
+      cdn.jsdelivr.net/npm/@br1jm0h4n/epubjs/epubJS.min.js
+      <span class="copy-hint">copy</span>
+    </span>
+  </div>
+  <div class="install-item">
+    <span class="install-label">size</span>
+    <span class="install-cmd" style="cursor:default; color:var(--muted)">16.6 KB minified · no dependencies</span>
+  </div>
+</div>
+
+<!-- DEMO SECTION -->
+<section id="demo">
+  <div class="section-label">Interactive</div>
+  <h2>Build an EPUB right here</h2>
+  <p class="section-desc">Fill in the fields, click generate — your browser downloads a real, valid EPUB 3 file.</p>
+
+  <div class="demo-layout">
+    <!-- LEFT: FORM -->
+    <div class="demo-panel">
+      <div class="demo-panel-header">
+        <div class="dot-row">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+        </div>
+        <span class="demo-panel-title">Book builder</span>
+        <span></span>
+      </div>
+
+      <div class="demo-fields">
+        <label>
+          Title
+          <input type="text" id="f-title" value="The Midnight Garden" placeholder="Book title"/>
+        </label>
+        <label>
+          Author
+          <input type="text" id="f-author" value="Elara Voss" placeholder="Author name"/>
+        </label>
+        <label>
+          Description
+          <input type="text" id="f-desc" value="A story of secrets and seasons." placeholder="Short description"/>
+        </label>
+
+        <label style="margin-top:4px">
+          Chapters
+          <div class="chapter-list" id="chapter-list"></div>
+          <button class="btn-add" onclick="addChapter()">+ add chapter</button>
+        </label>
+      </div>
+
+      <div id="status-log">
+        <span class="status-dot idle"></span>
+        <span id="status-text">Ready — click generate to build your EPUB</span>
+      </div>
+
+      <div class="demo-actions">
+        <button class="btn-generate" id="gen-btn" onclick="buildEpub()">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 12L6.5 1L12 12H1Z" fill="currentColor"/></svg>
+          Generate &amp; Download
+        </button>
+        <button class="btn btn-ghost" onclick="resetForm()" style="font-size:12px; padding:9px 16px">Reset</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: CODE PREVIEW -->
+    <div class="demo-panel">
+      <div class="demo-panel-header">
+        <span class="demo-panel-title">Generated code</span>
+        <button class="btn-add" style="padding:4px 12px; font-size:11px" onclick="copyCode()">copy</button>
+      </div>
+      <div class="code-panel" id="code-preview"></div>
+    </div>
+  </div>
+</section>
+
+<!-- API SECTION -->
+<section id="api">
+  <div class="section-label">Reference</div>
+  <h2>Clean, chainable API</h2>
+  <p class="section-desc">Every method returns <code style="font-family:var(--mono);color:var(--accent);font-size:13px">this</code> for chaining. All generation methods are async.</p>
+
+  <div class="api-grid">
+    <div class="api-card">
+      <div class="api-method">new EBook(options)</div>
+      <p>Create a book. Pass title, author, language, publisher, description, date, uuid, rights, sanitize.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.addChapter(title, html, opts)</div>
+      <p>Add a chapter. HTML is sanitized automatically. Options: id, order, css[], raw.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.setCover(data, mime, filename, opts)</div>
+      <p>Set the cover image. Pass base64, ArrayBuffer, or Blob. opts.asPage inserts a full cover page.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.addTOCPage(opts)</div>
+      <p>Insert a human-readable contents page before chapter one. Custom title, css, inlineStyle.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.addCSS(filename, content)</div>
+      <p>Embed a stylesheet. Reference it in chapters via opts.css: ["style.css"].</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.addImage(filename, data, mime)</div>
+      <p>Add an image asset. Reference in HTML as ../images/filename. Supports JPEG, PNG, WebP, GIF, SVG.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.addFont(filename, data, mime)</div>
+      <p>Embed a font file. Reference via @font-face in your CSS. Supports WOFF2, WOFF, TTF, OTF.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.updateChapter(id, title, html)</div>
+      <p>Replace a chapter's title or content in place. Throws if id is not found.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.removeChapter(id)</div>
+      <p>Remove a chapter by its id. Silent if not found.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.reorderChapters(idArray)</div>
+      <p>Re-sequence chapters by passing ids in the desired order.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.download(filename?)</div>
+      <p>Generate and trigger a browser download. Filename defaults to slugified title.</p>
+    </div>
+    <div class="api-card">
+      <div class="api-method">.generate() → Blob</div>
+      <p>Returns raw Blob. Also: .toBase64() for a base64 string, .toObjectURL() for a preview URL.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section id="features">
+  <div class="section-label">Why epub.js</div>
+  <h2>Everything included</h2>
+  <p class="section-desc">One file, zero dependencies beyond JSZip, covers the full EPUB 3 spec.</p>
+
+  <div class="feature-list">
+    <div class="feature-item">
+      <span class="feature-icon">🛡</span>
+      <h3>Allowlist sanitizer</h3>
+      <p>DOM-based HTML sanitizer preserves tables, images, links, figures, lists, code — strips scripts, iframes, forms.</p>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">📖</span>
+      <h3>EPUB 3 + EPUB 2 compat</h3>
+      <p>Generates nav.xhtml for EPUB 3 readers and toc.ncx for legacy EPUB 2 readers simultaneously.</p>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">🖼</span>
+      <h3>Cover page</h3>
+      <p>Full-bleed cover XHTML page with proper epub:type="cover" and OPF cover-image manifest property.</p>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">📑</span>
+      <h3>Hard-coded TOC page</h3>
+      <p>Numbered, clickable contents page inserted into the spine — the kind printed on page 3 of a real book.</p>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">🎨</span>
+      <h3>Fonts &amp; stylesheets</h3>
+      <p>Embed WOFF2 fonts and CSS files. Link stylesheets per-chapter or globally across the whole book.</p>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">⚡</span>
+      <h3>UMD module</h3>
+      <p>Works as a plain script tag, CommonJS require(), or ESM import. Auto-injects JSZip if not present.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>epub.js — built by <a href="https://github.com/br1jm0h4n" target="_blank">@br1jm0h4n</a></p>
+  <p>
+    <a href="https://www.npmjs.com/package/@br1jm0h4n/epubjs" target="_blank">npm</a> &nbsp;·&nbsp;
+    <a href="https://cdn.jsdelivr.net/npm/@br1jm0h4n/epubjs/epubJS.min.js" target="_blank">cdn</a> &nbsp;·&nbsp;
+    <a href="https://github.com/br1jm0h4n/epubjs" target="_blank">github</a>
+  </p>
+</footer>
+
+<script>
+  /* ── DEFAULT CHAPTERS ── */
+  const DEFAULT_CHAPTERS = [
+    {
+      title: "The Gate",
+      html: `<h1>The Gate</h1>\n<p>She found it on the first night of autumn, half-hidden behind a curtain of ivy that shivered in a wind she could not feel.</p>\n<p>The iron was cold under her fingers, slick with dew.</p>`
+    },
+    {
+      title: "The Seasons",
+      html: `<h1>The Seasons</h1>\n<p>The garden changed with each visit. Every night brought a different sky — sometimes bruised purple, sometimes starless black.</p>\n<blockquote><p>What you find beyond the gate is what you carried with you all along.</p></blockquote>`
+    }
+  ];
+
+  function addChapter(title = "", html = "") {
+    const list = document.getElementById("chapter-list");
+    const idx  = list.children.length;
+    const row  = document.createElement("div");
+    row.className = "chapter-row";
+    row.innerHTML = `
+      <input type="text" placeholder="Chapter title" value="${escHtml(title)}" data-ch-title/>
+      <textarea placeholder="Body HTML…" data-ch-html>${escHtml(html)}</textarea>
+      <button class="btn-remove" onclick="this.parentElement.remove(); updateCode()" title="Remove">×</button>
+    `;
+    row.querySelector("[data-ch-title]").addEventListener("input", updateCode);
+    row.querySelector("[data-ch-html]").addEventListener("input", updateCode);
+    list.appendChild(row);
+    updateCode();
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function resetForm() {
+    document.getElementById("f-title").value   = "The Midnight Garden";
+    document.getElementById("f-author").value  = "Elara Voss";
+    document.getElementById("f-desc").value    = "A story of secrets and seasons.";
+    document.getElementById("chapter-list").innerHTML = "";
+    DEFAULT_CHAPTERS.forEach(c => addChapter(c.title, c.html));
+    setStatus("idle", "Reset — ready to generate");
+  }
+
+  /* ── CODE PREVIEW ── */
+  function getChaptersData() {
+    const rows = document.querySelectorAll("#chapter-list .chapter-row");
+    return Array.from(rows).map(r => ({
+      title: r.querySelector("[data-ch-title]").value || "Untitled",
+      html:  r.querySelector("[data-ch-html]").value  || ""
+    }));
+  }
+
+  function updateCode() {
+    const title   = document.getElementById("f-title").value  || "Untitled";
+    const author  = document.getElementById("f-author").value || "Unknown";
+    const desc    = document.getElementById("f-desc").value;
+    const chs     = getChaptersData();
+
+    const chLines = chs.map((c, i) =>
+      `\n<span class="fn">book</span>.<span class="fn">addChapter</span>(<span class="str">"${escHtml(c.title)}"</span>, chapterHtml[<span class="num">${i}</span>], { css: [<span class="str">"style.css"</span>] });`
+    ).join("");
+
+    document.getElementById("code-preview").innerHTML =
+`<span class="cm">// Install: npm i @br1jm0h4n/epubjs</span>
+<span class="cm">// CDN: cdn.jsdelivr.net/npm/@br1jm0h4n/epubjs/epubJS.min.js</span>
+
+<span class="kw">const</span> book = <span class="kw">new</span> <span class="fn">EBook</span>({
+  title:       <span class="str">"${escHtml(title)}"</span>,
+  author:      <span class="str">"${escHtml(author)}"</span>,${desc ? `\n  description: <span class="str">"${escHtml(desc)}"</span>,` : ""}
+  language:    <span class="str">"en"</span>,
+});
+
+book.<span class="fn">addCSS</span>(<span class="str">"style.css"</span>, cssContent);
+book.<span class="fn">addTOCPage</span>({ title: <span class="str">"Contents"</span>, css: [<span class="str">"style.css"</span>] });
+${chLines}
+
+<span class="kw">await</span> book.<span class="fn">download</span>();`;
+  }
+
+  /* ── STATUS ── */
+  function setStatus(type, msg) {
+    const log  = document.getElementById("status-log");
+    const dot  = log.querySelector(".status-dot");
+    const text = document.getElementById("status-text");
+    log.className = type === "ok" ? "ok" : type === "err" ? "err" : "";
+    dot.className = "status-dot" + (type === "idle" ? " idle" : "");
+    text.textContent = msg;
+  }
+
+  /* ── BUILD ── */
+  async function buildEpub() {
+    const btn = document.getElementById("gen-btn");
+    btn.disabled = true;
+    setStatus("", "Building EPUB…");
+
+    try {
+      const title  = document.getElementById("f-title").value  || "Untitled";
+      const author = document.getElementById("f-author").value || "Unknown";
+      const desc   = document.getElementById("f-desc").value;
+      const chs    = getChaptersData();
+
+      if (!chs.length) throw new Error("Add at least one chapter first.");
+
+      const book = new EBook({ title, author, description: desc, language: "en" });
+
+      book.addCSS("style.css", `
+        body { font-family: Georgia, serif; font-size: 1em; line-height: 1.8;
+               max-width: 36em; margin: 0 auto; padding: 2em 1.5em; color: #1a1a1a; }
+        h1   { font-size: 1.6em; margin-top: 3em; }
+        p    { margin: 0; text-indent: 1.5em; }
+        p + p { margin-top: .6em; }
+        blockquote { border-left: 3px solid #ccc; padding-left: 1em;
+                     color: #666; font-style: italic; margin: 1.5em 0; }
+      `);
+
+      book.addTOCPage({ title: "Contents", css: ["style.css"] });
+
+      chs.forEach(c => book.addChapter(c.title, c.html, { css: ["style.css"] }));
+
+      setStatus("", "Generating ZIP…");
+      await book.download();
+      setStatus("ok", `✓ "${title}.epub" downloaded successfully`);
+    } catch(e) {
+      setStatus("err", "✗ " + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ── COPY HELPERS ── */
+  function copyText(el, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = el.querySelector(".copy-hint");
+      if (orig) { orig.textContent = "copied!"; setTimeout(() => orig.textContent = "copy", 1500); }
+    });
+  }
+
+  function copyCode() {
+    const raw = document.getElementById("code-preview").innerText;
+    navigator.clipboard.writeText(raw);
+  }
+
+  /* ── INIT ── */
+  document.addEventListener("DOMContentLoaded", () => {
+    DEFAULT_CHAPTERS.forEach(c => addChapter(c.title, c.html));
+    ["f-title","f-author","f-desc"].forEach(id =>
+      document.getElementById(id).addEventListener("input", updateCode)
+    );
+  });
+</script>
+</body>
+</html>
