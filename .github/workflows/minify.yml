@@ -20,7 +20,7 @@ jobs:
           node-version: 20
 
       - name: Minify with Terser
-        run: npx terser epubJS.js --compress "drop_console=true,passes=2" --mangle --mangle-props "regex='^_[a-z]'" --format "preamble='/*! epub.js | @br1jm0h4n/epubjs | MIT */'" --output epubJS.min.js
+        run: npx terser epubJS.js --compress --mangle --output epubJS.min.js
 
       - name: Show size diff
         run: |
