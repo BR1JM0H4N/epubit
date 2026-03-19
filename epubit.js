@@ -1,5 +1,5 @@
 /**
- * epubJS — Client-side EPUB 3 builder library
+ * epubit — Client-side EPUB 3 builder library
  * Features: full HTML sanitizer, cover page, hard-coded TOC page, images, tables, links, CSS
  *
  * Usage:
