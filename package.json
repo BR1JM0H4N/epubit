@@ -1,6 +1,6 @@
 {
   "name": "epubit",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Client-side EPUB 3 builder — create valid EPUB files directly in the browser",
   "main": "epubit.js",
   "browser": "epubit.min.js",
