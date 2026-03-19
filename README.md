@@ -5,24 +5,24 @@
 <h1 align="center">epub.js</h1>
 <p align="center">Client-side EPUB 3 builder for the browser</p>
 
-# epubJS — User Manual
+# epubit — User Manual
 
 
 A client-side JavaScript library for building valid EPUB 3 files directly in the browser. No server required.
 
-[![GitHub](https://img.shields.io/badge/github-BR1JM0H4N%2FepubJS-blue?logo=github)](https://github.com/BR1JM0H4N/epubJS)
-[![License](https://img.shields.io/github/license/BR1JM0H4N/epubJS)](LICENSE)
+[![GitHub](https://img.shields.io/badge/github-BR1JM0H4N%2Fepubit-blue?logo=github)](https://github.com/BR1JM0H4N/epubit)
+[![License](https://img.shields.io/github/license/BR1JM0H4N/epubit)](LICENSE)
 [![JavaScript](https://img.shields.io/badge/javascript-55.3%25-yellow?logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![HTML](https://img.shields.io/badge/html-44.7%25-orange?logo=html5)](https://developer.mozilla.org/en-US/docs/Web/HTML)
 [![npm version](https://img.shields.io/npm/v/epubjs)](https://www.npmjs.com/package/epubjs)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/BR1JM0H4N/epubJS/.github/workflows/ci.yml?branch=main)](https://github.com/BR1JM0H4N/epubJS/actions)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/BR1JM0H4N/epubJS/graphs/commit-activity)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/BR1JM0H4N/epubit/.github/workflows/ci.yml?branch=main)](https://github.com/BR1JM0H4N/epubit/actions)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/BR1JM0H4N/epubit/graphs/commit-activity)
 [![npm](https://img.shields.io/npm/v/@br1jm0h4n/epubjs?style=flat-square&logo=npm&logoColor=white&label=npm&color=CB3837)](https://www.npmjs.com/package/@br1jm0h4n/epubjs)
 <!--[![npm downloads](https://img.shields.io/npm/dm/@br1jm0h4n/epubjs?style=flat-square&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/@br1jm0h4n/epubjs)
 [![jsDelivr](https://img.shields.io/jsdelivr/npm/hm/@br1jm0h4n/epubjs?style=flat-square&logo=jsdelivr&logoColor=white&label=jsDelivr&color=E84D3D)](https://cdn.jsdelivr.net/npm/@br1jm0h4n/epubjs/)-->
 ## 🚀 Live Demo
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen?style=for-the-badge)](https://br1jm0h4n.github.io/epubJS/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen?style=for-the-badge)](https://br1jm0h4n.github.io/epubit/)
 
 ## Features
 
@@ -61,11 +61,11 @@ A client-side JavaScript library for building valid EPUB 3 files directly in the
 
 ### Via `<script>` tag (browser)
 
-Include JSZip first, then epubJS.js. JSZip will also be auto-injected if missing, but including it yourself is more reliable.
+Include JSZip first, then epubit.js. JSZip will also be auto-injected if missing, but including it yourself is more reliable.
 
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="epubJS.js"></script>
+<script src="epubit.js"></script>
 ```
 
 `EBook` is now available globally on `window`.
@@ -73,7 +73,7 @@ Include JSZip first, then epubJS.js. JSZip will also be auto-injected if missing
 ### Via CommonJS / Node-compatible bundler
 
 ```js
-const EBook = require("./epubJS.js");
+const EBook = require("./epubit.js");
 ```
 
 ### Via ESM bundler (Webpack, Vite, Rollup)
@@ -81,7 +81,7 @@ const EBook = require("./epubJS.js");
 The library uses a UMD wrapper, so it works with any bundler. Just import it:
 
 ```js
-import EBook from "./epubJS.js";
+import EBook from "./epubit.js";
 ```
 
 > **Note:** The library targets browser environments. It depends on `DOMParser`, `FileReader`, `URL.createObjectURL`, and `document`. It will not work in a pure Node.js environment without a DOM polyfill.
@@ -219,7 +219,7 @@ book.removeCover();
 
 ## 6. Table of Contents Page
 
-epubJS.js generates two kinds of TOC automatically: an EPUB 3 `nav.xhtml` (used by modern readers for their built-in TOC sidebar) and an EPUB 2 `toc.ncx` (for legacy readers). These are structural and invisible as readable pages.
+epubit.js generates two kinds of TOC automatically: an EPUB 3 `nav.xhtml` (used by modern readers for their built-in TOC sidebar) and an EPUB 2 `toc.ncx` (for legacy readers). These are structural and invisible as readable pages.
 
 `addTOCPage()` adds a **third**, human-readable TOC as a real page inside the book — the kind you'd find printed on page 3 of a physical book. It has numbered entries and clickable links.
 
@@ -886,11 +886,11 @@ The spine order is always: **Cover page → TOC page → Chapters (in order)**.
 
 | Error message | Cause | Fix |
 |---|---|---|
-| `epubJS.js: cannot generate — no chapters added.` | `generate()` or `download()` called with no chapters | Add at least one chapter with `addChapter()` before generating |
-| `epubJS.js: chapter "id" not found` | `updateChapter()` called with an ID that doesn't exist | Check IDs with `getChapters()` |
-| `epubJS.js: JSZip could not be loaded.` | CDN unreachable and JSZip not included manually | Add `<script src="jszip.min.js">` before `epubJS.js` |
-| `epubJS.js: failed to load <url>` | Script injection failed (network error, CSP, etc.) | Include JSZip manually rather than relying on auto-injection |
+| `epubit.js: cannot generate — no chapters added.` | `generate()` or `download()` called with no chapters | Add at least one chapter with `addChapter()` before generating |
+| `epubit.js: chapter "id" not found` | `updateChapter()` called with an ID that doesn't exist | Check IDs with `getChapters()` |
+| `epubit.js: JSZip could not be loaded.` | CDN unreachable and JSZip not included manually | Add `<script src="jszip.min.js">` before `epubit.js` |
+| `epubit.js: failed to load <url>` | Script injection failed (network error, CSP, etc.) | Include JSZip manually rather than relying on auto-injection |
 
 ---
 
-*epubJS.js produces valid EPUB 3.0 files with EPUB 2 (NCX) backward compatibility. Tested against Calibre, Apple Books, Kobo, and Google Play Books.*
+*epubit.js produces valid EPUB 3.0 files with EPUB 2 (NCX) backward compatibility. Tested against Calibre, Apple Books, Kobo, and Google Play Books.*
