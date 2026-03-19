@@ -65,7 +65,7 @@ Include JSZip first, then epubit.js. JSZip will also be auto-injected if missing
 
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="epubit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubit/epubit.js"></script>
 ```
 
 `EBook` is now available globally on `window`.
