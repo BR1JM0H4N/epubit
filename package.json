@@ -12,20 +12,44 @@
   "keywords": [
     "epub",
     "epub3",
+    "epub-generator",
+    "epub-builder",
+    "epub-writer",
+    "epub-creator",
     "ebook",
+    "ebook-generator",
+    "book",
     "browser",
     "client-side",
-    "jszip"
+    "frontend",
+    "no-server",
+    "vanilla-js",
+    "umd",
+    "jszip",
+    "html-to-epub",
+    "markdown-to-epub",
+    "generate-epub",
+    "download-epub",
+    "sanitizer",
+    "xhtml",
+    "toc",
+    "cover",
+    "chapters",
+    "publishing",
+    "digital-publishing",
+    "reading",
+    "kobo",
+    "kindle"
   ],
   "author": "BR1JM0H4N",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/BR1JM0H4N/epubjs.git"
+    "url": "https://github.com/BR1JM0H4N/epubit.git"
   },
-  "homepage": "https://github.com/BR1JM0H4N/epubjs#readme",
+  "homepage": "https://github.com/BR1JM0H4N/epubit#readme",
   "bugs": {
-    "url": "https://github.com/BR1JM0H4N/epubjs/issues"
+    "url": "https://github.com/BR1JM0H4N/epubit/issues"
   },
   "scripts": {
     "test": "echo \"No tests yet\" && exit 0"
