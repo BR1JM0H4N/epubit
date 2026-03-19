@@ -20,21 +20,21 @@ jobs:
           node-version: 20
 
       - name: Minify with Terser
-        run: npx terser epubJS.js --compress "drop_console=true,passes=2" --mangle --format "preamble='/*! epub.js | @br1jm0h4n/epubjs | MIT */'" --output epubJS.min.js
+        run: npx terser epubit.js --compress "drop_console=true,passes=2" --mangle --format "preamble='/*! epubit.js | @br1jm0h4n/epubit | MIT */'" --output epubit.min.js
 
       - name: Show size diff
         run: |
-          ORIG=$(wc -c < epubJS.js)
-          MINI=$(wc -c < epubJS.min.js)
+          ORIG=$(wc -c < epubit.js)
+          MINI=$(wc -c < epubit.min.js)
           PCT=$(awk "BEGIN { printf \"%.1f\", (1 - $MINI/$ORIG) * 100 }")
-          echo "epubJS.js    : $ORIG bytes"
-          echo "epubJS.min.js: $MINI bytes"
+          echo "epubit.js    : $ORIG bytes"
+          echo "epubit.min.js: $MINI bytes"
           echo "Reduction    : $PCT%"
 
       - name: Commit minified file
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add epubJS.min.js
-          git diff --staged --quiet || git commit -m "build: minify epubJS.js → epubJS.min.js"
+          git add epubit.min.js
+          git diff --staged --quiet || git commit -m "build: minify epubit.js → epubit.min.js"
           git push
